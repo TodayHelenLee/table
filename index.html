@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"
+        integrity="sha512-XdUZ5nrNkVySQBnnM5vzDqHai823Spoq1W3pJoQwomQja+o4Nw0Ew1ppxo5bhF2vMug6sfibhKWcNJsG8Vj9tg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://unpkg.com/axios@1.1.2/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://rawgit.com/matfish2/vue-tables-2/master/dist/vue-tables-2.min.js"></script>
+    <style>
+        @media (max-width:768px) {
+
+            .el-input__wrapper::after {
+                position: absolute;
+                content: '';
+                background-color: #fff;
+                width: 20px;
+                height: 20px;
+                background-color: #fff;
+                right: 27px;
+                top: 9px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <el-input list="historySearch" name="city" placeholder="City or State" v-model.debounce="input"
+            @input="debouncedHandleInput();normalSearch()" ref="inputEle" clearable>
+        </el-input>
+        <datalist id="historySearch">
+            <option :value="history" v-for="history in historySearch"></option>
+        </datalist>
+        <div class="already" v-show="input.trim() !== '' && !messageNoResult">
+            <v-client-table :columns="columns" :data="allDetail" :options="options" class="thead-dark">
+                <div slot="population" slot-scope="props" target="_blank" v-text="numberWithCommas(props.row.population)"
+                  >
+                </div>
+            </v-client-table>
+        </div>
+        <ul class="suggestions" v-show="input.trim() === '' ">
+            <li>Filter for a city</li>
+            <li>or a state</li>
+        </ul>
+        <ul class="suggestions" v-show="messageNoResult">
+            <li>
+                沒有符合的項目
+            </li>
+        </ul>
+    </div>
+
+    <script>
+        Vue.use(VueTables.ClientTable);
+        const Event = VueTables.Event
+
+        const app = new Vue({
+            el: '#app',
+            data() {
+                return {
+                    columns: ['city', 'state', 'population'],
+                    options: {
+                        pagination: {
+                            chunk: 5,
+                            nav: 'scroll'
+                        },
+                        headings: {
+                            city: 'city name',
+                            state: 'state name',
+                        },
+                        filterable: false
+                    },
+                    allDetail: [],
+                    historySearch: [],
+                    messageNoResult: '',
+                    cities: [],
+                    afterSearchCity: [],
+                    input: '',
+                    api: 'https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json'
+                }
+            },
+            watch: {
+                afterSearchCity: {
+                    handler(val, oldVal) {
+                        if (val.length === 0) {
+                            this.messageNoResult = true;
+                        } else {
+                            this.messageNoResult = false;
+                        }
+                    }
+
+                }
+            },
+            computed: {
+            },
+            methods: {
+                debounce(func, delay) {
+                    let timeoutId;
+                    return function () {
+                        const context = this;
+                        const args = arguments;
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(function () {
+                            func.apply(context, args);
+                        }, delay);
+                    };
+                },
+                getSessionHistory() {
+                    if (window.sessionStorage.getItem('history') !== null) {
+                        this.historySearch = JSON.parse(window.sessionStorage.getItem('history'));
+                        return this.historySearch;
+                    }
+                },
+                setSessionHistory(val) {
+                    let currentHistory = this.getSessionHistory();
+
+                    if (currentHistory !== undefined && val !== '') {
+                        this.historySearch = [...currentHistory];
+                        this.historySearch.push(val);
+                    } else if (val !== '') {
+                        this.historySearch.push(val);
+                    }
+
+                    this.historySearch = [...new Set(this.historySearch)];
+
+                    window.sessionStorage.setItem('history', JSON.stringify(this.historySearch));
+                },
+                trimSpace() {
+                    this.input = this.input.replace(/^\s/, '');
+                    let self = this;
+
+                    self.afterSearchCity = self.cities.filter((item, index) => {
+                        const regex = new RegExp(self.input, 'gi');
+                        return item.city.match(regex) || item.state.match(regex);
+                    })
+
+                    this.allDetail = self.afterSearchCity;
+
+                    self.setSessionHistory(this.input);
+                },
+                normalSearch() {
+                    this.afterSearchCity = false;
+                },
+                numberWithCommas(x) {
+                    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                },
+                async getApi() {
+                    axios.get(this.api)
+                        .then((response) => {
+                            let dataArr = response.data;
+                            this.cities = dataArr;
+                            console.log(this.numberWithCommas(dataArr[0].population))
+                        })
+                        .catch((error) => { })
+                },
+
+            },
+            mounted() {
+                this.getApi();
+                this.getSessionHistory();
+                this.debouncedHandleInput = this.debounce(this.trimSpace, 1000);
+            }
+        });
+
+    </script>
+</body>
+
+</html>
+
+
+
