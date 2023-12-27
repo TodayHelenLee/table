@@ -148,12 +148,17 @@
                     this.debouncedHandleInput();
                     this.normalSearch();
                     this.allShow = false;
+                    if (searchText === '') {
+                        this.input = ''
+                    }
                 },
                 onSelect(value) {
                     this.debouncedHandleInput();
                     this.normalSearch();
                     this.allShow = false;
-
+                    if (value === ' ') {
+                        this.input = ''
+                    }
                 },
                 onChange(value) {
                     if (value === ' ') {
@@ -193,7 +198,6 @@
                 },
                 trimSpace() {
                     this.input = this.input.replace(/^\s/, '');
-                    console.log(this.input+'oooooo')
                     let self = this;
 
                     self.afterSearchCity = self.cities.filter((item, index) => {
