@@ -16,6 +16,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ant-design-vue/1.6.5/antd.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ant-design-vue/1.6.5/antd.min.js"></script>
     <style>
+
+.suggestions {
+    margin-top: 50px;
+}
+
+.ant-select-auto-complete.ant-select .ant-input {
+    height: 50px;
+    line-height: 1.5;
+    background: transparent;
+    border-width: 1px;
+    margin-top: 100px;
+}
         @media (max-width:768px) {
 
 
@@ -53,7 +65,7 @@
                 <a-icon slot="indicator" type="loading" style="font-size: 24px" spin />
             </a-spin>
         </div>
-        <div class="already" v-show="input.trim() !== '' && !messageNoResult && allShow && !error">
+        <div  class="already suggestions" v-show="input.trim() !== '' && !messageNoResult && allShow && !error">
             <v-client-table :columns="columns" :data="allDetail" :options="options" class="thead-dark">
                 <div slot="population" slot-scope="props" target="_blank"
                     v-text="numberWithCommas(props.row.population)">
@@ -66,7 +78,7 @@
         <div class="suggestions" v-show="messageNoResult && allShow && !error">
             <a-alert message="Warning" description="No matching items." type="warning" show-icon />
         </div>
-        <div v-show="error">
+        <div class="suggestions" v-show="error">
             <a-alert message="Error" description="Internet connection issue, please reach out to on-site staff."
                 type="error" show-icon />
         </div>
@@ -134,7 +146,7 @@
 
                 },
                 onChange(value) {
-                    if (value === undefined) {
+                    if (value === ' ') {
                         this.input = ''
                     }
                 },
@@ -171,6 +183,7 @@
                 },
                 trimSpace() {
                     this.input = this.input.replace(/^\s/, '');
+                    console.log(this.input+'oooooo')
                     let self = this;
 
                     self.afterSearchCity = self.cities.filter((item, index) => {
